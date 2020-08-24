@@ -22,9 +22,9 @@ const uint16_t hv_clos = 0U;
  * clos value (valid_clos_num) that is common between the resources as
  * each resource's clos max value to have consistent allocation.
  */
+#ifdef CONFIG_RDT_ENABLED
 uint16_t valid_clos_num = MAX_PLATFORM_CLOS_NUM;
 
-#ifdef CONFIG_RDT_ENABLED
 static struct rdt_info res_cap_info[RDT_NUM_RESOURCES] = {
 	[RDT_RESOURCE_L3] = {
 		.res.cache = {
@@ -163,10 +163,10 @@ static void setup_res_clos_msr(uint16_t pcpu_id, uint16_t res, struct platform_c
 		switch (res) {
 		case RDT_RESOURCE_L3:
 		case RDT_RESOURCE_L2:
-			val = (uint64_t)res_clos_info[i].clos_mask;
+			val = (uint64_t)res_clos_info[i].clos_setting.clos_mask;
 			break;
 		case RDT_RESOURCE_MBA:
-			val = (uint64_t)res_clos_info[i].mba_delay;
+			val = (uint64_t)res_clos_info[i].clos_setting.mba_delay;
 			break;
 		default:
 			ASSERT(res < RDT_NUM_RESOURCES, "Support only 3 RDT resources. res=%d is invalid", res);

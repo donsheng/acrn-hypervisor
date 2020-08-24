@@ -8,7 +8,6 @@
 #define BOARD_INFO_H
 
 #define MAX_PCPU_NUM			4U
-#define MAX_PLATFORM_CLOS_NUM		0U
 #define MAX_VMSIX_ON_MSI_PDEVS_NUM	0U
 #define MAX_HIDDEN_PDEVS_NUM		0U
 
