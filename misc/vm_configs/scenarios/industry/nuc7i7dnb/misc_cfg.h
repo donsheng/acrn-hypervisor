@@ -25,4 +25,10 @@
 				"hvlog=2M@0xe00000 "	\
 				"memmap=0x200000$0xe00000"
 
+#ifdef CONFIG_RDT_ENABLED
+#define HV_SUPPORTED_MAX_CLOS		0U
+#define MAX_MBA_CLOS_NUM_ENTRIES	0U
+#define MAX_CACHE_CLOS_NUM_ENTRIES	0U
+#endif
+
 #endif /* MISC_CFG_H */
