@@ -28,5 +28,6 @@
 #define UOS_VIRT_PCI_MMCFG_END_BUS	0xFFU
 
 void build_vrsdp(struct acrn_vm *vm);
+void vacpi_fixup(struct acrn_vm *vm, void *src_addr);
 
 #endif /* VACPI_H */

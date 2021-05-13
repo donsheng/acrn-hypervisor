@@ -520,38 +520,60 @@ static void guest_cpuid_01h(struct acrn_vcpu *vcpu, uint32_t *eax, uint32_t *ebx
 	*edx &= ~CPUID_EDX_DTES;
 }
 
+static void get_cpuid_0bh_by_level(uint32_t type, uint32_t *eax, uint32_t *ebx, uint32_t *ecx, uint32_t *edx)
+{
+	uint32_t subleaf;
+
+	for (subleaf = 0U;; subleaf++) {
+		uint32_t level_type;
+
+		/*
+		 * ECX Bits 07 - 00: Level number. Same value in ECX input.
+		 * Bits 15 - 08: Level type***.
+		 * Bits 31 - 16: Reserved
+		 *
+		 * The value of the “level type” field is not related to level numbers in any way,
+		 * higher “level type” values do not mean higher levels. Level type field has the following encoding:
+		 * 0: Invalid.
+		 * 1: SMT.
+		 * 2: Core.
+		 * 3-255: Reserved.
+		 */
+		cpuid_subleaf(0x0BU, subleaf, eax, ebx, ecx, edx);
+
+		level_type = (*ecx >> 8U) & 0xFFU;
+		if ((level_type == CPUID_0B_TYPE_INVAL) || (level_type == type)) {
+			break;
+		}
+	}
+}
+
 static void guest_cpuid_0bh(struct acrn_vcpu *vcpu, uint32_t *eax, uint32_t *ebx, uint32_t *ecx, uint32_t *edx)
 {
-	uint32_t leaf = 0x0bU;
 	uint32_t subleaf = *ecx;
 
 	/* Patching X2APIC */
 	if (is_sos_vm(vcpu->vm)) {
-		cpuid_subleaf(leaf, subleaf, eax, ebx, ecx, edx);
+		cpuid_subleaf(0x0BU, subleaf, eax, ebx, ecx, edx);
 	} else {
-		*ecx = subleaf & 0xFFU;
-		/* No HT emulation for UOS */
-		switch (subleaf) {
+		switch (subleaf & 0xFFU) {
 		case 0U:
-			*eax = 0U;
-			*ebx = 1U;
-			*ecx |= (1U << 8U);
+			get_cpuid_0bh_by_level(CPUID_0B_TYPE_SMT, eax, ebx, ecx, edx);
 		break;
+
 		case 1U:
-			if (vcpu->vm->hw.created_vcpus == 1U) {
-				*eax = 0U;
-			} else {
-				*eax = (uint32_t)fls32(vcpu->vm->hw.created_vcpus - 1U) + 1U;
-			}
-			*ebx = vcpu->vm->hw.created_vcpus;
-			*ecx |= (2U << 8U);
+			get_cpuid_0bh_by_level(CPUID_0B_TYPE_CORE, eax, ebx, ecx, edx);
 		break;
+
 		default:
 			*eax = 0U;
 			*ebx = 0U;
 			*ecx |= (0U << 8U);
 		break;
 		}
+
+		/* Bits 07 - 00: Level number. Same value in ECX input */
+		*ecx = (*ecx & 0xFFFFFF00U) | (subleaf & 0xFFU);
 	}
 	*edx = vlapic_get_apicid(vcpu_vlapic(vcpu));
 }

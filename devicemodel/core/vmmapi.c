@@ -273,6 +273,9 @@ vm_create(const char *name, uint64_t req_buf, int *vcpu_num)
 
 	*vcpu_num = create_vm.vcpu_num;
 	ctx->vmid = create_vm.vmid;
+	memcpy((void *)ctx->vapic_ids, (void *)create_vm.vapic_ids, 64U);
+	ctx->l2_cat_shift = create_vm.l2_cat_shift;
+	ctx->l3_cat_shift = create_vm.l3_cat_shift;
 
 	return ctx;
 

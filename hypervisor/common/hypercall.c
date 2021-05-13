@@ -24,6 +24,7 @@
 #include <vmcs9900.h>
 #include <asm/rtcm.h>
 #include <asm/irq.h>
+#include <asm/cpuid.h>
 
 #define DBG_LEVEL_HYCALL	6U
 
@@ -172,6 +173,53 @@ int32_t hcall_get_platform_info(struct acrn_vcpu *vcpu, __unused struct acrn_vm 
 	return ret;
 }
 
+static uint32_t nearest_pow2(uint32_t n)
+{
+	uint32_t r;
+	uint32_t p = n;
+
+	if (n >= 2U) {
+		for (r = 1U, p = 0U; r != 0U; r <<= 1U, p++) {
+			if (r >= n) {
+				break;
+			}
+		}
+	}
+
+	return p;
+}
+
+static void get_cache_shift(uint32_t *l2_cat_shift, uint32_t *l3_cat_shift)
+{
+	uint32_t subleaf;
+
+	*l2_cat_shift = 0U;
+	*l3_cat_shift = 0U;
+
+	for (subleaf = 0U;; subleaf++) {
+		uint32_t eax, ebx, ecx, edx;
+		uint32_t cache_type, cache_level, id, shift;
+
+		cpuid_subleaf(0x4U, subleaf, &eax, &ebx, &ecx, &edx);
+
+		cache_type = eax & 0x1fU;
+		cache_level = (eax >> 5U) & 0x7U;
+		id = (eax >> 14U) & 0xfffU;
+		shift = nearest_pow2(id + 1U);
+
+		/* No more caches */
+		if ((cache_type == 0U) || (cache_type >= 4U)) {
+			break;
+		}
+
+		if (cache_level == 2U) {
+			*l2_cat_shift = shift;
+		} else if (cache_level == 3U) {
+			*l3_cat_shift = shift;
+		}
+	}
+}
+
 /**
  * @brief create virtual machine
  *
@@ -224,9 +272,17 @@ int32_t hcall_create_vm(struct acrn_vcpu *vcpu, struct acrn_vm *target_vm, uint6
 					pr_err("Wrong guest flags 0x%lx\n", vm_config->guest_flags);
 				} else {
 					if (create_vm(vmid, pcpu_bitmap, vm_config, &tgt_vm) == 0) {
+						struct acrn_vcpu *tmp_vcpu;
+						uint16_t idx_vcpu;
+
 						/* return a relative vm_id from SOS view */
 						cv.vmid = vmid_2_rel_vmid(vm->vm_id, vmid);
 						cv.vcpu_num = tgt_vm->hw.created_vcpus;
+						get_cache_shift(&cv.l2_cat_shift, &cv.l3_cat_shift);
+
+						foreach_vcpu(idx_vcpu, tgt_vm, tmp_vcpu) {
+							cv.vapic_ids[idx_vcpu] = vcpu_vlapic(tmp_vcpu)->vapic_id;
+						}
 					} else {
 						dev_dbg(DBG_LEVEL_HYCALL, "HCALL: Create VM failed");
 						cv.vmid = ACRN_INVALID_VMID;

@@ -366,11 +366,15 @@ struct acrn_create_vm {
 	 *   The least significant set bit is the PCPU # the VCPU 0 maps to;
 	 *   second set least significant bit is the PCPU # the VCPU 1 maps to;
 	 *   and so on...
-	*/
+	 */
 	uint64_t cpu_affinity;
 
+	uint32_t l2_cat_shift;
+	uint32_t l3_cat_shift;
+	uint8_t vapic_ids[64];
+
 	/** Reserved for future use*/
-	uint8_t  reserved2[8];
+	uint8_t  reserved2[16];
 } __aligned(8);
 
 /**

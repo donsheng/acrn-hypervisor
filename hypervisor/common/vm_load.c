@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <sprintf.h>
 #include <logmsg.h>
+#include <vacpi.h>
 
 #define NUM_REMAIN_1G_PAGES	3UL
 
@@ -219,6 +220,7 @@ int32_t vm_sw_loader(struct acrn_vm *vm)
 	}
 	/* Copy Guest OS ACPI to its load location */
 	if (acpi_info->size == ACPI_MODULE_SIZE) {
+		vacpi_fixup(vm, acpi_info->src_addr);
 		(void)copy_to_gpa(vm, acpi_info->src_addr, (uint64_t)acpi_info->load_addr, ACPI_MODULE_SIZE);
 	}
 	switch (vm->sw.kernel_type) {

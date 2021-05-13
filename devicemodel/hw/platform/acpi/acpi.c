@@ -281,7 +281,8 @@ basl_fwrite_madt(FILE *fp, struct vmctx *ctx)
 		EFPRINTF(fp, "[0001]\t\tLength : 08\n");
 		/* iasl expects hex values for the proc and apic id's */
 		EFPRINTF(fp, "[0001]\t\tProcessor ID : %02x\n", i);
-		EFPRINTF(fp, "[0001]\t\tLocal Apic ID : %02x\n", i);
+		EFPRINTF(fp, "[0001]\t\tLocal Apic ID : %02x\n", ctx->vapic_ids[i]);
+
 		EFPRINTF(fp, "[0004]\t\tFlags (decoded below) : 00000001\n");
 		EFPRINTF(fp, "\t\t\tProcessor Enabled : 1\n");
 		EFPRINTF(fp, "\t\t\tRuntime Online Capable : 0\n");

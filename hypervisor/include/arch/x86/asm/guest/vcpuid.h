@@ -13,6 +13,11 @@
 /* Guest capability flags reported by CPUID */
 #define GUEST_CAPS_PRIVILEGE_VM	(1U << 0U)
 
+/* CPUID instruction 0xB ECX level type */
+#define CPUID_0B_TYPE_INVAL  0U
+#define CPUID_0B_TYPE_SMT    1U
+#define CPUID_0B_TYPE_CORE   2U
+
 struct vcpuid_entry {
 	uint32_t eax;
 	uint32_t ebx;

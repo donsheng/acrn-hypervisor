@@ -2219,6 +2219,28 @@ int32_t vlapic_x2apic_write(struct acrn_vcpu *vcpu, uint32_t msr, uint64_t val)
 	return error;
 }
 
+#if 0
+/**
+ *  @pre vcpu != NULL && BSP_CPU_ID == 0U
+ */
+static uint8_t vlapic_calculate_lapic_id(__unused struct acrn_vcpu *vcpu, uint16_t pcpu_id)
+{
+	uint8_t vapic_id = 0U;
+
+	ASSERT(BSP_CPU_ID == 0U, "BSP_CPU_ID is not 0!");
+
+	if (vcpu->vcpu_id != BSP_CPU_ID) {
+		struct acrn_vcpu *bsp = vcpu_from_vid(vcpu->vm, BSP_CPU_ID);
+
+		vapic_id = (uint8_t) (per_cpu(lapic_id, pcpu_id) ^ per_cpu(lapic_id, pcpuid_from_vcpu(bsp)));
+	}
+
+	return vapic_id;
+
+	return per_cpu(lapic_id, pcpu_id);
+}
+#endif
+
 /**
  *  @pre vcpu != NULL
  */
@@ -2251,7 +2273,7 @@ void vlapic_create(struct acrn_vcpu *vcpu, uint16_t pcpu_id)
 		 */
 		vlapic->vapic_id = per_cpu(lapic_id, pcpu_id);
 	} else {
-		vlapic->vapic_id = (uint32_t)vcpu->vcpu_id;
+		vlapic->vapic_id = per_cpu(lapic_id, pcpu_id);
 	}
 
 	dev_dbg(DBG_LEVEL_VLAPIC, "vlapic APIC ID : 0x%04x", vlapic->vapic_id);

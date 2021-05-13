@@ -71,6 +71,10 @@ struct vmctx {
 	/* if gvt-g is enabled for current VM */
 	bool gvt_enabled;
 
+	uint32_t l2_cat_shift;
+	uint32_t l3_cat_shift;
+	uint8_t vapic_ids[64];
+
 	void (*update_gvt_bar)(struct vmctx *ctx);
 };
 
